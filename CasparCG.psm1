@@ -1,26 +1,37 @@
-#CasparCG Utilities
-
+#CasparCG PowerShell CmdLets
+# By Ian Morrish
+# GNU GENERAL PUBLIC LICENSE V3
+# https://github.com/imorrish/GasparCG-PowerShell
+#
 Function New-CGConnection{
     <# .Synopsis
 #>
-$casparcg = new-object "CasparCGNETConnector.CasparCGConnection"
-$casparcg.connect("localhost",5250)
+param(
+        [Parameter(ParameterSetName='Default', Position=1, HelpMessage="Connect to a new CasparCG Server")]
+        [String]$host = "localhost"
+        )
+    $casparcg = new-object "CasparCGNETConnector.CasparCGConnection"
+    $casparcg.connect($host,5250)
+    ,$casparcg
  }
 
 function Show-CGCommands{
     <# .Synopsis
+        Show all commands
 #>
+
     [CasparCGNETConnector.CasparCGCommandFactory]::getCommandInfoList()
  }
 
-function Set-CGGenerateThumbnailAll{
+function New-CGGenerateThumbnailAll{
     <# .Synopsis
 #>
+[CmdletBinding(DefaultParameterSetName="Default")]
     $ThumbnailGenerateAllCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailGenerateAllCommand")
-    $ThumbnailGenerateAllCommand.execute([ref]$casparcg)
+    ,$ThumbnailGenerateAllCommand
  }
 
-function set-PlayCommand{
+function New-PlayCommand{
     <# .Synopsis
 	    Starts playing a media
 	.Parameter channel
@@ -40,48 +51,67 @@ function set-PlayCommand{
 	.Parameter filter
         The ffmpeg filter to apply
 #>
+[CmdletBinding(DefaultParameterSetName="Default")]
 param (
 
-        [Parameter(ParameterSetName='server', Position=1, Mandatory=$true, HelpMessage="Please specify the server #")]
-        [Int]$server,
-
-        [Parameter(ParameterSetName='channel', Position=2, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
         [Int]$channel,
 
-        [Parameter(ParameterSetName='layer', Position=3, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
         [Int]$layer,
 
-        [Parameter(ParameterSetName='media', Position=4, Mandatory=$true, HelpMessage="The media to play")]
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="The media to play")]
         [String]$media,
 
-        [Parameter(ParameterSetName='looping', Position=5, HelpMessage="Loops the media (True,False)")]
+        [Parameter(ParameterSetName='Default', Position=4, HelpMessage="Loops the media (True,False)")]
         [Bool]$looping = $False,
 
-        [Parameter(ParameterSetName='seek', Position=6, HelpMessage="The Number of frames to seek before playing")]
-        [String]$seek,
+        [Parameter(ParameterSetName='Default', Position=5, HelpMessage="The Number of frames to seek before playing")]
+        [Long]$seek=0,
 
-        [Parameter(ParameterSetName='length', Position=7, HelpMessage="The number of frames to play")]
-        [String]$length,
+        [Parameter(ParameterSetName='Default', Position=6, HelpMessage="The number of frames to play")]
+        [Long]$length=0,
 
-        [Parameter(ParameterSetName='transition', Position=8, HelpMessage=" The transition to perform at start")]
-        [ValidateSet("CUT", "MIX", "PUSH", "WIPE")]
-        [String]$transition = "CUT",
+        [Parameter(ParameterSetName='Default', Position=7, HelpMessage=" The transition to perform at start")]
+        $transition,
 
-        [Parameter(ParameterSetName='filter', Position=9, HelpMessage="The ffmpeg filter to apply")]
-        [String]$filter
+        [Parameter(ParameterSetName='Default', Position=8, HelpMessage="The ffmpeg filter to apply")]
+        [String]$filter = ""
 )
-     $PlayCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PlayCommand")
+PROCESS {
+    $PlayCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PlayCommand")
+    $PlayCommand.setChannel($channel)
+    $PlayCommand.setLayer($layer)
+    $PlayCommand.setMedia($media)
+    $PlayCommand.setLooping($looping)
+    if($seek -ne 0){$PlayCommand.setSeek($seek)}
+    if($length -ne 0){$PlayCommand.setLength($length)}
+    if($transition){ $PlayCommand.setTransition([ref]$transition)}
+    #$PlayCommand.setFilter($filter)
+    ,$PlayCommand
+    }
  }
-function set-StopCommand{
+function New-StopCommand{
     <# .Synopsis
 	Stops the given channel or layer
 	*channel: The channel
 	*layer: The layer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $StopCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("StopCommand")
+     $StopCommand.setChannel($channel)
+     $StopCommand.setLayer($layer)
+     ,$StopCommand
 }
 
-function set-LoadCommand{
+function New-LoadCommand{
     <# .Synopsis
 	Loads a media
 	*channel: The channel
@@ -93,9 +123,44 @@ function set-LoadCommand{
 	*transition: The transition to perform at start
 	*filter: The ffmpeg filter to apply
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer,
+        
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="The media to play")]
+        [String]$media,
+
+        [Parameter(ParameterSetName='Default', Position=4, HelpMessage="Loops the media (True,False)")]
+        [Bool]$looping = $False,
+
+        [Parameter(ParameterSetName='Default', Position=5, HelpMessage="The Number of frames to seek before playing")]
+        [Long]$seek=0,
+
+        [Parameter(ParameterSetName='Default', Position=6, HelpMessage="The number of frames to play")]
+        [Long]$length=0,
+
+        [Parameter(ParameterSetName='Default', Position=7, HelpMessage=" The transition to perform at start")]
+        [Obj]$transition,
+
+        [Parameter(ParameterSetName='Default', Position=8, HelpMessage="The ffmpeg filter to apply")]
+        [String]$filter = ""
+        )
      $LoadCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("LoadCommand")
+    $LoadCommand.setChannel($channel)
+    $LoadCommand.setLayer($layer)
+    $LoadCommand.setMedia($media)
+    $LoadCommand.setLooping($looping)
+    if($seek -ne 0){$LoadCommand.setSeek($seek)}
+    if($length -ne 0){$LoadCommand.setLength($length)}
+    $LoadCommand.setTransition($transition)
+     ,$LoadCommand
 }
-function set-LoadbgCommand{
+function New-LoadbgCommand{
     <# .Synopsis
 	Loads a media to the background
 	*channel: The channel
@@ -108,9 +173,48 @@ function set-LoadbgCommand{
 	*transition: The transition to perform at start
 	*filter: The ffmpeg filter to apply
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer,
+                
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="The media to play")]
+        [String]$media,
+                        
+        [Parameter(ParameterSetName='Default', Position=4, Mandatory=$true, HelpMessage="Autostart play? (Default=True)")]
+        [Bool]$autostarting,
+
+        [Parameter(ParameterSetName='Default', Position=5, HelpMessage="Loops the media (True,False)")]
+        [Bool]$looping = $False,
+
+        [Parameter(ParameterSetName='Default', Position=6, HelpMessage="The Number of frames to seek before playing")]
+        [Long]$seek=0,
+
+        [Parameter(ParameterSetName='Default', Position=7, HelpMessage="The number of frames to play")]
+        [Long]$length=0,
+
+        [Parameter(ParameterSetName='Default', Position=8, HelpMessage=" The transition to perform at start")]
+        [Obj]$transition,
+
+        [Parameter(ParameterSetName='Default', Position=9, HelpMessage="The ffmpeg filter to apply")]
+        [String]$filter = ""
+        )
      $LoadbgCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("LoadbgCommand")
+    $LoadbgCommand.setChannel($channel)
+    $LoadbgCommand.setLayer($layer)
+    $LoadbgCommand.setMedia($media)
+    $LoadbgCommand.setAutostarting($autostarting)
+    $LoadbgCommand.setLooping($looping)
+    if($seek -ne 0){$LoadbgCommand.setSeek($seek)}
+    if($length -ne 0){$LoadbgCommand.setLength($length)}
+    #$LoadbgCommand.setTransition($transition)
+     ,$LoadbgCommand
 }
-function set-RouteCommand{
+function New-RouteCommand{
     <# .Synopsis
 	Routes a channel or layer to an other channel or layer
 	*channel: The channel
@@ -118,25 +222,52 @@ function set-RouteCommand{
 	*source channel: The source channel (content)
 	*source layer: The source layer (content)
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $RouteCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RouteCommand")
 }
-function set-PauseCommand{
+function New-PauseCommand{
     <# .Synopsis
 	Pauses the given channel or layer
 	*channel: The channel
 	*layer: The layer
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $PauseCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PauseCommand")
 }
-function set-ResumeCommand{
+function New-ResumeCommand{
     <# .Synopsis
 	Resumes a paused clip on the given channel or layer
 	*channel: The channel
 	*layer: The layer
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $ResumeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ResumeCommand")
 }
-function set-CallCommand{
+function New-CallCommand{
     <# .Synopsis
 	Manipulates a loaded media
 	*channel: The channel
@@ -147,132 +278,222 @@ function set-CallCommand{
 	*transition: The transition to perform at start
 	*filter: The ffmpeg filter to apply
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CallCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CallCommand")
 }
-function set-SwapCommand{
+function New-SwapCommand{
     <# .Synopsis
 	Swaps the given channels or layers
 	*channelA: The first channel
 	*channelB: The second channel
 	*layerA: The first layer
 	*layerB: The second layer
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $SwapCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("SwapCommand")
 }
-function set-ClearCommand{
+function New-ClearCommand{
     <# .Synopsis
 	Clears the server channels, a given channel or layer
 	*channel: The channel
 	*layer: The layer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $ClearCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ClearCommand")
+     $ClearCommand.setChannel($channel)
+     $ClearCommand.setLayer($layer)
+     ,$ClearCommand
 }
 
-function set-AddCommand{
+function New-AddCommand{
     <# .Synopsis
 	Adds a consumer to a given channel
 	*channel: The channel
 	*consumer: The consumer to add to the channel i.e. SCREEN or FILE.
 	*parameter: The paramter list
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+        )
      $AddCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("AddCommand")
 }
 
 
-function set-RemoveCommand{
+function New-RemoveCommand{
     <# .Synopsis
 	Removes a consumer from a given channel
 	*channel: The channel
 	*consumer: The consumer to add to the channel i.e. SCREEN or FILE.
 	*parameter: The paramter list
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+)
      $RemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RemoveCommand")
 }
 
-function set-PrintCommand{
+function New-PrintCommand{
     <# .Synopsis
 	Saves a screenshot of a given channel
 	*channel: The channel
 	*file: The destination filename
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+        )
      $PrintCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PrintCommand")
 }
-function set-SetCommand{
+function New-SetCommand{
     <# .Synopsis
 	Sets the video mode of the given channel
 	*channel: The channel
 	*video mode: The video mode
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+        )
      $SetCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("SetCommand")
 }
 
-function set-ByeCommand{
+function New-ByeCommand{
     <# .Synopsis
 	Disconnects from the server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ByeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ByeCommand")
 }
-function set-KillCommand{
+function New-KillCommand{
     <# .Synopsis
 	Stops the server with exitcode 0
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $KillCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("KillCommand")
 }
-function set-RestartCommand{
+function New-RestartCommand{
     <# .Synopsis
 	Stops the server with exitcode 5
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
      $RestartCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RestartCommand")
 }
-function set-DataListCommand{
+function Get-DataListCommand{
     <# .Synopsis
 	Lists all stored data on the server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $DataListCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataListCommand")
 }
 
-function set-DataStoreCommand{
+function Set-DataStoreCommand{
     <# .Synopsis
 	Stores the given data string by the given key
 	*key: The key
 	*data: The data string to store
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$key,
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$data
+        )
      $DataStoreCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataStoreCommand")
 }
-function set-DataRetrieveCommand{
+function Get-DataRetrieveCommand{
     <# .Synopsis
 	Retrieves the data string stored by the given key
 	*key: The key
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$key
+        )
      $DataRetrieveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataRetrieveCommand")
 }
-function set-DataRemoveCommand{
+function New-DataRemoveCommand{
     <# .Synopsis
 	Removes the data string stored by the given key
 	*key: The key
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$key
+        )
      $DataRemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataRemoveCommand")
 }
-function set-ClsCommand{
+function New-ClsCommand{
     <# .Synopsis
 	Requests a list of all media files on the server
-#> 
+#>
+ 
+[CmdletBinding()]
      $ClsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ClsCommand")
+     ,$ClsCommand
 }
-function set-TlsCommand{
+function New-TlsCommand{
     <# .Synopsis
 	Requests a list of all templates on the server
 #> 
+[CmdletBinding()]
      $TlsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("TlsCommand")
+     ,$TlsCommand
 }
-function set-CinfCommand{
+function New-CinfCommand{
     <# .Synopsis
 	Requests details of a media file on the server
 	*media: The media file
 #> 
-     $CinfCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CinfCommand")
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the media file")]
+        [String]$media
+        )
+     $CinfCommand.SetMedia($media)
+     ,$CinfCommand
 }
-function set-InfoCommand{
+function New-InfoCommand{
     <# .Synopsis
 	Requests informations about a channel or layer
 	*channel: The channel
@@ -280,97 +501,138 @@ function set-InfoCommand{
 	*only background: Only show info of background
 	*only foreground: Only show info of foreground
 	*delay: shows the delay of a channel
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $InfoCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoCommand")
+
+     $InfoCommand
 }
-function set-InfoTemplateCommand{
+function New-InfoTemplateCommand{
     <# .Synopsis
 	Requests informations about a template
 	*template: The template
 #> 
      $InfoTemplateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoTemplateCommand")
+
+     ,$InfoTemplateCommand
 }
-function set-InfoConfigCommand{
+function New-InfoConfigCommand{
     <# .Synopsis
 	Requests the configuration of the server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $InfoConfigCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoConfigCommand")
+     ,$InfoConfigCommand
 }
-function set-InfoPathsCommand{
+function New-InfoPathsCommand{
     <# .Synopsis
 	Requests the path configuration of the server
+    .Example1
+        $paths = New-InfoPathsCommand
+        $cgPaths = $paths.execute([ref]$casparcg)
+        $cgPaths.getServerMessage()
+
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $InfoPathsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoPathsCommand")
+     ,$InfoPathsCommand
 }
-function set-InfoServerCommand{
+function New-InfoServerCommand{
     <# .Synopsis
 	Requests informations about the connected server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $InfoServerCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoServerCommand")
+     ,$InfoServerCommand
 }
-function set-InfoSystemCommand{
+function New-InfoSystemCommand{
     <# .Synopsis
 	Requests system information of the server
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
      $InfoSystemCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoSystemCommand")
+     ,$InfoSystemCommand
 }
-function set-InfoThreadsCommand{
+function New-InfoThreadsCommand{
     <# .Synopsis
 	Requests informations about the threads and their names of the connected server
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
      $InfoThreadsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoThreadsCommand")
+     ,$InfoThreadsCommand
 }
-function set-InfoQueuesCommand{
+function New-InfoQueuesCommand{
     <# .Synopsis
 	Requests informations about the AMCP command queues of the connected server
 #> 
      $InfoQueuesCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoQueuesCommand")
+     ,$InfoQueuesCommand
 }
-function set-VersionServerCommand{
+function New-VersionServerCommand{
     <# .Synopsis
 	Requests current server version
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
      $VersionServerCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("VersionServerCommand")
+     ,$VersionServerCommand
 }
-function set-VersionFlashCommand{
+function New-VersionFlashCommand{
     <# .Synopsis
 	Requests current flash version on the server
 #> 
      $VersionFlashCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("VersionFlashCommand")
+     ,$VersionFlashCommand
 }
-function set-VersionTemplatehostCommand{
+function New-VersionTemplatehostCommand{
     <# .Synopsis
 	Requests current templatehost version of the server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $VersionTemplatehostCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("VersionTemplatehostCommand")
+     ,$VersionTemplatehostCommand
 }
-function set-ThumbnailListCommand{
+function New-ThumbnailListCommand{
     <# .Synopsis
 	Requests a list of all thumbnails on the server
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ThumbnailListCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailListCommand")
+     ,$ThumbnailListCommand
 }
-function set-ThumbnailGenerateCommand{
+function New-ThumbnailGenerateCommand{
     <# .Synopsis
 	Requests the server to (re-)generate the thumbnails for a specific media file
 	*media: The media file
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ThumbnailGenerateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailGenerateCommand")
 }
-function set-ThumbnailGenerateAllCommand{
+function New-ThumbnailGenerateAllCommand{
     <# .Synopsis
 	Requests the server to (re-)generate thumbnails for all media files
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ThumbnailGenerateAllCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailGenerateAllCommand")
+     ,$ThumbnailGenerateAllCommand
 }
-function set-ThumbnailRetrieveCommand{
+function New-ThumbnailRetrieveCommand{
     <# .Synopsis
 	Requests the base64 encoded thumbnail for a specific media file
 	*media: The media file
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ThumbnailRetrieveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailRetrieveCommand")
+     ,$ThumbnailRetrieveCommand
 }
-function set-CgAddCommand{
+function New-CgAddCommand{
     <# .Synopsis
 	Adds a flashtemplate to a given channel / layer on a given flashlayer
 	*channel: The channel
@@ -380,63 +642,127 @@ function set-CgAddCommand{
 	*play on load: Starts playing the template when loaded
 	*data: The xml data string
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgAddCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgAddCommand")
 }
-function set-CgRemoveCommand{
+
+function New-CgRemoveCommand{
     <# .Synopsis
 	Removes a flashtemplate on a given flashlayer from a given channel / layer
 	*channel: The channel
 	*layer: The layer
 	*flashlayer: The flashlayer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgRemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgRemoveCommand")
 }
-function set-CgPlayCommand{
+function New-CgPlayCommand{
     <# .Synopsis
 	Plays a flashtemplate on a given flashlayer from a given channel / layer
 	*channel: The channel
 	*layer: The layer
 	*flashlayer: The flashlayer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgPlayCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgPlayCommand")
 }
-function set-CgStopCommand{
+function New-CgStopCommand{
     <# .Synopsis
 	Stops a flashtemplate on a given flashlayer from a given channel / layer
 	*channel: The channel
 	*layer: The layer
 	*flashlayer: The flashlayer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgStopCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgStopCommand")
 }
-function set-CgNextCommand{
+function New-CgNextCommand{
     <# .Synopsis
 	Triggers a 'continue' in the template on the specified layer
 	*channel: The channel
 	*layer: The layer
 	*flashlayer: The flashlayer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgNextCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgNextCommand")
 }
-function set-CgClearCommand{
+function New-CgClearCommand{
     <# .Synopsis
 	Clears all layers and any state that might be stored
 	*channel: The channel
 	*layer: The layer
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgClearCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgClearCommand")
 }
-function set-CgUpdateCommand{
+function New-CgUpdateCommand{
     <# .Synopsis
 	Sends new data to the template on specified layer
 	*channel: The channel
 	*layer: The layer
 	*flashlayer: The flashlayer
 	*data: The xml data string
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgUpdateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgUpdateCommand")
 }
-function set-CgInvokeCommand{
+function New-CgInvokeCommand{
     <# .Synopsis
 	Calls a custom method in the document class of the template on the specified layer
 	*channel: The channel
@@ -444,15 +770,25 @@ function set-CgInvokeCommand{
 	*flashlayer: The flashlayer
 	*method: The methode to invoke
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $CgInvokeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CgInvokeCommand")
 }
-function set-ChannelGridCommand{
+function New-ChannelGridCommand{
     <# .Synopsis
 	Opens a new channel and displays a grid with the contents of all the existing channels.
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
      $ChannelGridCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ChannelGridCommand")
 }
-function set-MixerAnchorCommand{
+function New-MixerAnchorCommand{
     <# .Synopsis
 	Changes the anchor point around which fill_translation, fill_scale and ROTATION will be done from. x The left anchor point, 0 $ = left edge of monitor, 0.5 $ = middle of monitor, 1.0 $ = right edge of monitor. Higher and lower values allowed. y The top anchor point, 0 $ = top edge of monitor, 0.5 $ = middle of monitor, 1.0 $ = bottom edge of monitor. Higher and lower values allowed.
 	*channel: The channel
@@ -462,18 +798,36 @@ function set-MixerAnchorCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerAnchorCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerAnchorCommand")
 }
-function set-MixerBlendCommand{
+function New-MixerBlendCommand{
     <# .Synopsis
 	Every layer in the Mixer module can be set to a blend mode over than the default Normal mode, similar to applications like Photoshop. Some common uses are to use screen to make a all the black image data become transparent, or to use add to selectively lighten highlights.
 	*channel: The channel
 	*layer: The layer
 	*blendmode: The blend mode to use with the mixer like, OVERLAY, ADD, SCREEN etc.
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerBlendCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerBlendCommand")
 }
-function set-MixerBrightnessCommand{
+function New-MixerBrightnessCommand{
     <# .Synopsis
 	Changes the brightness of the specified layer. The value is a float between 0 and 1
 	*channel: The channel
@@ -481,10 +835,19 @@ function set-MixerBrightnessCommand{
 	*brightness: The brightness value of the layer
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerBrightnessCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerBrightnessCommand")
 }
-function set-MixerChromaCommand{
+function New-MixerChromaCommand{
     <# .Synopsis
 	Enables chroma keying on the specified video layer
 	*channel: The channel
@@ -492,18 +855,36 @@ function set-MixerChromaCommand{
 	*color: The color to key with. Only blue, green or none allowed
 	*threshold: The threshold
 	*softness: The softness
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerChromaCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerChromaCommand")
 }
-function set-MixerClearCommand{
+function New-MixerClearCommand{
     <# .Synopsis
 	Reset all transformations
 	*channel: The channel
 	*layer: The layer
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerClearCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerClearCommand")
 }
-function set-MixerClipCommand{
+function New-MixerClipCommand{
     <# .Synopsis
 	Masks the video stream on the specified layer. The concept is quite simple; it comes from the ancient DVE machines like ADO. Imagine that the screen has a size of 1x1 (not in pixel, but in an abstract measure). Then the coordinates of a full size picture is 0 0 1 1, which means left edge is at coordinate 0, top edge at coordinate 0, width full size $ => 1, heigh full size $ => 1. If you want to crop the picture on the left side (for wipe left to right) You set the left edge to full right $ => 1 and the width to 0. So this give you the start-coordinates of 1 0 0 1. End coordinates of any wipe are allways the full picture 0 0 1 1.
 	*channel: The channel
@@ -515,9 +896,18 @@ function set-MixerClipCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerClipCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerClipCommand")
 }
-function set-MixerContrastCommand{
+function New-MixerContrastCommand{
     <# .Synopsis
 	Changes the contrast of the specified layer. The value is a float between 0 and 1
 	*channel: The channel
@@ -526,9 +916,19 @@ function set-MixerContrastCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerContrastCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerContrastCommand")
 }
-function set-MixerCropCommand{
+function New-MixerCropCommand{
     <# .Synopsis
 	Returns or modifies the edges for the cropping for a layer.
 	*channel: The channel
@@ -539,10 +939,19 @@ function set-MixerCropCommand{
 	*bottom: The bottom edges pos.
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerCropCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerCropCommand")
 }
-function set-MixerFillCommand{
+function New-MixerFillCommand{
     <# .Synopsis
 	Scales the video stream on the specified layer. The concept is quite simple; it comes from the ancient DVE machines like ADO. Imagine that the screen has a size of 1x1 (not in pixel, but in an abstract measure). Then the coordinates of a full size picture is 0 0 1 1, which means left edge is at coordinate 0, top edge at coordinate 0, width full size $ => 1, heigh full size $ => 1. If you want to crop the picture on the left side (for wipe left to right) You set the left edge to full right $ => 1 and the width to 0. So this give you the start-coordinates of 1 0 0 1. End coordinates of any wipe are allways the full picture 0 0 1 1. With the FILL command it can make sense to have values between 1 and 0, if you want to do a smaller window. If, for instance you want to have a window of half the size of your screen, you set with and height to 0.5. If you want to center it you set left and top edge to 0.25 so you will get the arguments 0.25 0.25 0.5 0.5 
 	*channel: The channel
@@ -553,29 +962,53 @@ function set-MixerFillCommand{
 	*yscale: The size of the new fillSize, 1 $ = 1x the screen size, 0.5 $ = half the screen size. Higher and lower values allowed. 
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerFillCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerFillCommand")
 }
-function set-MixerGridCommand{
+function New-MixerGridCommand{
     <# .Synopsis
 	Creates a grid of video streams in ascending order of the layer index, i.e. if resolution equals 2 then a 2x2 grid of layers will be created.
 	*channel: The channel
 	*resolution: The resolution of the grid. i.e. if resolution equals 2 then a 2x2 grid of layers will be created.
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+        )
      $MixerGridCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerGridCommand")
 }
-function set-MixerKeyerCommand{
+function New-MixerKeyerCommand{
     <# .Synopsis
 	Replaces layer n+1's alpha channel with the alpha channel of layer n, and hides the RGB channels of layer n. If keyer equals 1 then the specified layer will not be rendered, instead it will be used as the key for the layer above. 
 	*channel: The channel
 	*layer: The layer
 	*keyer: Sets whether or not the keyer should be active
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerKeyerCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerKeyerCommand")
 }
-function set-MixerLevelsCommand{
+function New-MixerLevelsCommand{
     <# .Synopsis
 	Documentation missing. Sorry :-(
 	*channel: The channel
@@ -588,17 +1021,32 @@ function set-MixerLevelsCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerLevelsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerLevelsCommand")
 }
-function set-MixerMastervolumeCommand{
+function New-MixerMastervolumeCommand{
     <# .Synopsis
 	Changes the volume of an entire channel. 
 	*channel: The channel
 	*volume: The volume to set the channel to between
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel
+        )
      $MixerMastervolumeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerMastervolumeCommand")
 }
-function set-MixerOpacityCommand{
+function New-MixerOpacityCommand{
     <# .Synopsis
 	Changes the opacity of the specified layer. The value is a float between 0 and 1
 	*channel: The channel
@@ -606,11 +1054,20 @@ function set-MixerOpacityCommand{
 	*opacity: The opacity of the layer
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
 
      $MixerOpacityCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerOpacityCommand")
 }
-function set-MixerPerspectiveCommand{
+function New-MixerPerspectiveCommand{
     <# .Synopsis
 	Returns or modifies the corners of the perspective transformation for a layer.
 	*channel: The channel
@@ -626,9 +1083,18 @@ function set-MixerPerspectiveCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerPerspectiveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerPerspectiveCommand")
 }
-function set-MixerRotationCommand{
+function New-MixerRotationCommand{
     <# .Synopsis
 	Returns or modifies the angle of which a layer is rotated by (clockwise degrees) around the point specified by ANCHOR.
 	*channel: The channel
@@ -637,9 +1103,18 @@ function set-MixerRotationCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerRotationCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerRotationCommand")
 }
-function set-MixerSaturationCommand{
+function New-MixerSaturationCommand{
     <# .Synopsis
 	Changes the saturation of the specified layer. The value is a float between 0 and 1
 	*channel: The channel
@@ -648,18 +1123,36 @@ function set-MixerSaturationCommand{
 	*duration: The the duration of the tween
 	*tween: The the tween to use
 #> 
+[CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerSaturationCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerSaturationCommand")
 }
-function set-MixerStraightAlphaOutputCommand{
+function New-MixerStraightAlphaOutputCommand{
     <# .Synopsis
 	If enabled, causes RGB values to be divided with the alpha for the given video channel before the image is sent to consumers. 
 	*channel: The channel
 	*layer: The layer
 	*active: Sets whether or not straight alpha output should be active
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerStraightAlphaOutputCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerStraightAlphaOutputCommand")
 }
-function set-MixerVolumeCommand{
+function New-MixerVolumeCommand{
     <# .Synopsis
 	Changes the volume of the specified layer
 	*channel: The channel
@@ -667,6 +1160,17 @@ function set-MixerVolumeCommand{
 	*volume: The volume value of the layer
 	*duration: The the duration of the tween
 	*tween: The the tween to use
-#> 
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer
+        )
      $MixerVolumeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerVolumeCommand")
+
+     ,$MixerVolumeCommand
 }
