@@ -1,8 +1,5 @@
-#CasparCG PowerShell CmdLets
-# By Ian Morrish
-# GNU GENERAL PUBLIC LICENSE V3
-# https://github.com/imorrish/GasparCG-PowerShell
-#
+#CasparCG Utilities
+
 Function New-CGConnection{
     <# .Synopsis
 #>
@@ -87,7 +84,7 @@ PROCESS {
     if($seek -ne 0){$PlayCommand.setSeek($seek)}
     if($length -ne 0){$PlayCommand.setLength($length)}
     if($transition){ $PlayCommand.setTransition([ref]$transition)}
-    #$PlayCommand.setFilter($filter)
+    if($filter){$PlayCommand.setFilter($filter)}
     ,$PlayCommand
     }
  }
@@ -145,7 +142,7 @@ param (
         [Long]$length=0,
 
         [Parameter(ParameterSetName='Default', Position=7, HelpMessage=" The transition to perform at start")]
-        [Obj]$transition,
+        $transition,
 
         [Parameter(ParameterSetName='Default', Position=8, HelpMessage="The ffmpeg filter to apply")]
         [String]$filter = ""
@@ -157,7 +154,8 @@ param (
     $LoadCommand.setLooping($looping)
     if($seek -ne 0){$LoadCommand.setSeek($seek)}
     if($length -ne 0){$LoadCommand.setLength($length)}
-    $LoadCommand.setTransition($transition)
+    if($transition){ $PlayCommand.setTransition([ref]$transition)}
+    if($filter){$PlayCommand.setFilter($filter)}
      ,$LoadCommand
 }
 function New-LoadbgCommand{
@@ -198,7 +196,7 @@ param (
         [Long]$length=0,
 
         [Parameter(ParameterSetName='Default', Position=8, HelpMessage=" The transition to perform at start")]
-        [Obj]$transition,
+        $transition,
 
         [Parameter(ParameterSetName='Default', Position=9, HelpMessage="The ffmpeg filter to apply")]
         [String]$filter = ""
@@ -211,7 +209,8 @@ param (
     $LoadbgCommand.setLooping($looping)
     if($seek -ne 0){$LoadbgCommand.setSeek($seek)}
     if($length -ne 0){$LoadbgCommand.setLength($length)}
-    #$LoadbgCommand.setTransition($transition)
+    if($transition){ $PlayCommand.setTransition([ref]$transition)}
+    if($filter){$PlayCommand.setFilter($filter)}
      ,$LoadbgCommand
 }
 function New-RouteCommand{
@@ -225,13 +224,25 @@ function New-RouteCommand{
 [CmdletBinding(DefaultParameterSetName="Default")]
 param (
 
-        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Parameter(ParameterSetName='Default', Position=1, HelpMessage="Please specify the channel #")]
         [Int]$channel,
 
-        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
-        [Int]$layer
+        [Parameter(ParameterSetName='Default', Position=2, HelpMessage="Please specify the layer #")]
+        [Int]$layer,
+        
+        [Parameter(ParameterSetName='Default', Position=3, HelpMessage="Please specify the source channel #")]
+        [Int]$schannel,
+
+        [Parameter(ParameterSetName='Default', Position=4, HelpMessage="Please specify the source layer #")]
+        [Int]$slayer
         )
      $RouteCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RouteCommand")
+    if($channel){$RouteCommand.setChannel($channel)}
+    if($channel){$RouteCommand.setLayer($layer)}
+    if($channel){$RouteCommand.setSourceChannel($schannel)}
+    if($channel){$RouteCommand.setSourceLayer($slayer)}
+    ,$RouteCommand
+
 }
 function New-PauseCommand{
     <# .Synopsis
@@ -242,13 +253,16 @@ function New-PauseCommand{
 [CmdletBinding(DefaultParameterSetName="Default")] 
 param (
 
-        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Parameter(ParameterSetName='Default', Position=1,  HelpMessage="Please specify the channel #")]
         [Int]$channel,
 
-        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Parameter(ParameterSetName='Default', Position=2,  HelpMessage="Please specify the layer #")]
         [Int]$layer
         )
      $PauseCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PauseCommand")
+    if($channel){$RouteCommand.setChannel($channel)}
+    if($layer){$RouteCommand.setLayer($layer)}
+     ,$PauseCommand
 }
 function New-ResumeCommand{
     <# .Synopsis
@@ -285,9 +299,33 @@ param (
         [Int]$channel,
 
         [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
-        [Int]$layer
+        [Int]$layer,
+                        
+        [Parameter(ParameterSetName='Default', Position=3, HelpMessage="Loops the media (True,False)")]
+        [Bool]$looping = $False,
+
+        [Parameter(ParameterSetName='Default', Position=4, HelpMessage="The Number of frames to seek before playing")]
+        [Long]$seek=0,
+
+        [Parameter(ParameterSetName='Default', Position=5, HelpMessage="The number of frames to play")]
+        [Long]$length=0,
+
+        [Parameter(ParameterSetName='Default', Position=6, HelpMessage=" The transition to perform at start")]
+        $transition,
+
+        [Parameter(ParameterSetName='Default', Position=7, HelpMessage="The ffmpeg filter to apply")]
+        [String]$filter = ""
         )
-     $CallCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CallCommand")
+    $CallCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("CallCommand")
+    $CallCommand.setChannel($channel)
+    $CallCommand.setLayer($layer)
+    $CallCommand.setLooping($looping)
+    if($seek -ne 0){$CallCommand.setSeek($seek)}
+    if($length -ne 0){$CallCommand.setLength($length)}
+    if($transition){ $CallCommand.setTransition([ref]$transition)}
+    if($filter){$CallCommand.setFilter($filter)}
+    ,$CallCommand
+
 }
 function New-SwapCommand{
     <# .Synopsis
@@ -324,8 +362,8 @@ param (
         [Int]$layer
         )
      $ClearCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ClearCommand")
-     $ClearCommand.setChannel($channel)
-     $ClearCommand.setLayer($layer)
+     if($channel){$ClearCommand.setChannel($channel)}
+     if($layer){$ClearCommand.setLayer($layer)}
      ,$ClearCommand
 }
 
@@ -335,14 +373,26 @@ function New-AddCommand{
 	*channel: The channel
 	*consumer: The consumer to add to the channel i.e. SCREEN or FILE.
 	*parameter: The paramter list
+    .Example1
+    Add-Command 1 STREAM "udp://localhost:5004 -vcodec libx264 -tune zerolatency -preset ultrafast -crf 25 -format mpegts -vf scale=240:180"
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$channel
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer type (DECKLINK, BLUEFISH SCREEN, AUDIO, FILE or STREAM")]
+        [String]$consumer,
+
+        [Parameter(ParameterSetName='Default', Position=2, HelpMessage="Please specify the consumer parameters (Card #, Filename or ffmpeg parameters")]
+        [string]$parameters
         )
-     $AddCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("AddCommand")
+    $AddCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("AddCommand")
+    $AddCommand.setChannel($channel)
+    $AddCommand.setConsumer($consumer)
+    if($parameters){$AddCommand.setParameters($parameters)}
+     ,$AddCommand 
 }
 
 
@@ -357,9 +407,19 @@ function New-RemoveCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$channel
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer type (DECKLINK, BLUEFISH SCREEN, AUDIO, FILE or STREAM")]
+        [Int]$consumer,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer parameters")]
+        [string]$parameters
 )
-     $RemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RemoveCommand")
+    $RemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RemoveCommand")
+    $RemoveCommand.setChannel($channel)
+    $RemoveCommand.setConsumer($consumer)
+    if($parameters){$RemoveCommand.setParameters($parameters)}
+     ,$RemoveCommand 
 }
 
 function New-PrintCommand{
@@ -372,9 +432,15 @@ function New-PrintCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$channel
+        [Int]$channel,
+        
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the filename to save")]
+        [string]$file
         )
      $PrintCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("PrintCommand")
+    $PrintCommand.setChannel($channel)
+    $PrintCommand.setConsumer($file)
+     ,$PrintCommand
 }
 function New-SetCommand{
     <# .Synopsis
@@ -386,9 +452,16 @@ function New-SetCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$channel
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the video mode")]
+        [ValidateSet("PAL","NTSC","576p2500","720p2398","720p2400","720p2500","720p5000","720p2997","720p5994","720p3000","720p6000","1080p2398","1080p2400","1080i5000","1080i5994","1080i6000","1080p2500","1080p2997","1080p3000","1080p5000","1080p5994","1080p6000","1556p2398","1556p2400","1556p2500","2160p2398","2160p2400","2160p2500","2160p2997","2160p3000","dci1080p2398","dci1080p2400","dci1080p2500","dci2160p2398","dci2160p2400","dci2160p2500")]
+        [String]$mode
         )
      $SetCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("SetCommand")
+    $PrintCommand.setChannel($channel)
+    $PrintCommand.setConsumer($mode)
+     ,$SetCommand
 }
 
 function New-ByeCommand{
@@ -1090,7 +1163,38 @@ param (
         [Int]$channel,
 
         [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
-        [Int]$layer
+        [Int]$layer,
+                
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="Please specify the topLeftX")]
+        [Int]$topLeftX,
+        
+        [Parameter(ParameterSetName='Default', Position=4, Mandatory=$true, HelpMessage="Please specify the topLeftY")]
+        [Int]$topLeftY,
+        
+        [Parameter(ParameterSetName='Default', Position=5, Mandatory=$true, HelpMessage="Please specify the topRightX")]
+        [Int]$topRightX,
+        
+        [Parameter(ParameterSetName='Default', Position=6, Mandatory=$true, HelpMessage="Please specify the topRightY")]
+        [Int]$topRightY,
+        
+        [Parameter(ParameterSetName='Default', Position=7, Mandatory=$true, HelpMessage="Please specify the bottomRightX")]
+        [Int]$bottomRightX,
+                
+        [Parameter(ParameterSetName='Default', Position=8, Mandatory=$true, HelpMessage="Please specify the bottomRightY")]
+        [Int]$bottomRightY,
+                
+        [Parameter(ParameterSetName='Default', Position=9, Mandatory=$true, HelpMessage="Please specify the bottomLeftX")]
+        [Int]$bottomLeftX,
+                
+        [Parameter(ParameterSetName='Default', Position=10, Mandatory=$true, HelpMessage="Please specify the bottomLeftY")]
+        [Int]$bottomLeftY,
+                
+        [Parameter(ParameterSetName='Default', Position=11, Mandatory=$true, HelpMessage="Please specify the duration")]
+        [Int]$duration,
+                
+        [Parameter(ParameterSetName='Default', Position=12, Mandatory=$true, HelpMessage="Please specify the tween")]
+        [String]$tween
+
         )
      $MixerPerspectiveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerPerspectiveCommand")
 }
@@ -1173,4 +1277,36 @@ param (
      $MixerVolumeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("MixerVolumeCommand")
 
      ,$MixerVolumeCommand
+}
+
+function New-Transition{
+    <# .Synopsis
+	Creates a transition object for use by [ref] in other commands
+	*type: The channel
+	*direction: The layer
+	*time: The volume value of the layer
+	*duration: The the duration of the tween
+	*tween: The the tween to use
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the transition type (CUT, MIX, PUSH, SLIDE or WIPE)")]
+        [ValidateSet("CUT", "MIX", "PUSH", "SLIDE", "WIPE")]
+        [String]$type,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the transition duration")]
+        [Int]$duration,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the transition direction (FROMLEFT or FROMRIGHT)")]
+        [ValidateSet("FROMLEFT", "FROMRIGHT")]
+        [String]$direction,
+        
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the transition tween")]
+        [ValidateSet('Linear','EaseNone','EaseInQuad','EaseOutQuad','EaseInOutQuad','EaseOutInQuad','EaseInCubic','EaseOutCubic','EaseInOutCubic','EaseOutInCubic','EaseInQuart','EaseOutQuart','EaseInOutQuart','EaseOutInQuart','EaseInQuint','EaseOutQuint','EaseInOutQuint','EaseOutInQuint','EaseInSine','EaseOutSine','EaseInOutSine','EaseOutInSine','EaseInExpo','EaseOutExpo','EaseInOutExpo','EaseOutInExpo','EaseInCirc','EaseOutCirc','EaseInOutCirc','EaseOutInCirc','EaseInElastic','EaseOutElastic','EaseInOutElastic','EaseOutInElastic','EaseInBack','EaseOutBack','EaseInOutBack','EaseOutInBack','EaseOutBounce','EaseInBounce','EaseInOutBounce','EaseOutInBounce')]
+        [String]$tween
+        )
+        $transition = [CasparCGNETConnector.CasparCGTransition]::New($type, 200)
+
+        ,$transition
 }
