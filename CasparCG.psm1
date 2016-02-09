@@ -454,7 +454,7 @@ param (
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
         [Int]$channel,
 
-        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the video mode")]
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the video mode")]
         [ValidateSet("PAL","NTSC","576p2500","720p2398","720p2400","720p2500","720p5000","720p2997","720p5994","720p3000","720p6000","1080p2398","1080p2400","1080i5000","1080i5994","1080i6000","1080p2500","1080p2997","1080p3000","1080p5000","1080p5994","1080p6000","1556p2398","1556p2400","1556p2500","2160p2398","2160p2400","2160p2500","2160p2997","2160p3000","dci1080p2398","dci1080p2400","dci1080p2500","dci2160p2398","dci2160p2400","dci2160p2500")]
         [String]$mode
         )
@@ -593,8 +593,14 @@ function New-InfoTemplateCommand{
 	Requests informations about a template
 	*template: The template
 #> 
-     $InfoTemplateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoTemplateCommand")
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
 
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [String]$template
+        )
+     $InfoTemplateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoTemplateCommand")
+     $InfoTemplateCommand.setTemplate($template)
      ,$InfoTemplateCommand
 }
 function New-InfoConfigCommand{
@@ -1307,6 +1313,34 @@ param (
         [String]$tween
         )
         $transition = [CasparCGNETConnector.CasparCGTransition]::New($type, 200)
-
+        #TBA
         ,$transition
+}
+function New-DecklinkProducer{
+    <# .Synopsis
+	Creates a new Decklink Producer string for use with ,$connection.sendCommand()
+	*channel: The channel
+	*layer: The layer
+	*device: The decklink device ID
+	*mode: The video standard
+
+#>
+[CmdletBinding(DefaultParameterSetName="Default")] 
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channel,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layer,
+
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$device,
+
+        [Parameter(ParameterSetName='Default', Position=4, Mandatory=$true, HelpMessage="Please specify the video mode")]
+        [ValidateSet("PAL","NTSC","576p2500","720p2398","720p2400","720p2500","720p5000","720p2997","720p5994","720p3000","720p6000","1080p2398","1080p2400","1080i5000","1080i5994","1080i6000","1080p2500","1080p2997","1080p3000","1080p5000","1080p5994","1080p6000","1556p2398","1556p2400","1556p2500","2160p2398","2160p2400","2160p2500","2160p2997","2160p3000","dci1080p2398","dci1080p2400","dci1080p2500","dci2160p2398","dci2160p2400","dci2160p2500")]
+        [String]$mode
+        )
+        $DecklinkProducer = "PLAY " + $channel + "-" +$layer+ " DECKLINK DEVICE " + $device + " FORMAT " + $mode
+        ,$DecklinkProducer
 }
