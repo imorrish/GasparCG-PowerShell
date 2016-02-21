@@ -1,4 +1,4 @@
-#CasparCG Utilities
+#CasparCG Utilities v0.2
 
 Function New-CGConnection{
     <# .Synopsis
@@ -280,6 +280,9 @@ param (
         [Int]$layer
         )
      $ResumeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ResumeCommand")
+    if($channel){$ResumeCommand.setChannel($channel)}
+    if($layer){$ResumeCommand.setLayer($layer)}
+    ,$ResumeCommand
 }
 function New-CallCommand{
     <# .Synopsis
@@ -339,12 +342,20 @@ function New-SwapCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$channel,
-
-        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
-        [Int]$layer
+        [Int]$channelA,
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Int]$channelB,
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layerA,
+        [Parameter(ParameterSetName='Default', Position=4, Mandatory=$true, HelpMessage="Please specify the layer #")]
+        [Int]$layerB
         )
      $SwapCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("SwapCommand")
+     $swapCommand.setChannelA($channelA)
+     $swapCommand.setChannelA($channelB)
+     $swapCommand.setLayerA($layerA)
+     $swapCommand.setLayerb($layerB)
+     ,$swapCommand
 }
 function New-ClearCommand{
     <# .Synopsis
@@ -383,9 +394,10 @@ param (
         [Int]$channel,
 
         [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer type (DECKLINK, BLUEFISH SCREEN, AUDIO, FILE or STREAM")]
+        [ValidateSet("DECKLINK","BLUEFISH","SCREEN","AUDIO","FILE","STREAM")]
         [String]$consumer,
 
-        [Parameter(ParameterSetName='Default', Position=2, HelpMessage="Please specify the consumer parameters (Card #, Filename or ffmpeg parameters")]
+        [Parameter(ParameterSetName='Default', Position=3, HelpMessage="Please specify the consumer parameters (Card #, Filename or ffmpeg parameters")]
         [string]$parameters
         )
     $AddCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("AddCommand")
@@ -412,7 +424,7 @@ param (
         [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer type (DECKLINK, BLUEFISH SCREEN, AUDIO, FILE or STREAM")]
         [Int]$consumer,
 
-        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the consumer parameters")]
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="Please specify the consumer parameters")]
         [string]$parameters
 )
     $RemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RemoveCommand")
@@ -470,6 +482,7 @@ function New-ByeCommand{
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
      $ByeCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ByeCommand")
+     ,$ByeCommand
 }
 function New-KillCommand{
     <# .Synopsis
@@ -477,6 +490,7 @@ function New-KillCommand{
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
      $KillCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("KillCommand")
+     ,$KillCommand
 }
 function New-RestartCommand{
     <# .Synopsis
@@ -484,6 +498,7 @@ function New-RestartCommand{
 #>
 [CmdletBinding(DefaultParameterSetName="Default")] 
      $RestartCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("RestartCommand")
+     ,$RestartCommand
 }
 function Get-DataListCommand{
     <# .Synopsis
@@ -491,6 +506,7 @@ function Get-DataListCommand{
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
      $DataListCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataListCommand")
+     ,$DataListCommand
 }
 
 function Set-DataStoreCommand{
@@ -502,12 +518,15 @@ function Set-DataStoreCommand{
 [CmdletBinding(DefaultParameterSetName="Default")] 
 param (
 
-        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$key,
-        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$data
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the key")]
+        [string]$key,
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the value")]
+        [string]$data
         )
      $DataStoreCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataStoreCommand")
+     $DataStoreCommand.setKey($key)
+     $DataStoreCommand.setData($data)
+     ,$DataStoreCommand
 }
 function Get-DataRetrieveCommand{
     <# .Synopsis
@@ -518,9 +537,11 @@ function Get-DataRetrieveCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$key
+        [string]$key
         )
      $DataRetrieveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataRetrieveCommand")
+    $DataRetrieveCommand.setKey($key)
+    ,$DataRetrieveCommand
 }
 function New-DataRemoveCommand{
     <# .Synopsis
@@ -531,9 +552,11 @@ function New-DataRemoveCommand{
 param (
 
         [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
-        [Int]$key
+        [string]$key
         )
      $DataRemoveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("DataRemoveCommand")
+     $DataRemoveCommand.setKey($key)
+     ,$DataRemoveCommand
 }
 function New-ClsCommand{
     <# .Synopsis
@@ -582,11 +605,25 @@ param (
         [Int]$channel,
 
         [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the layer #")]
-        [Int]$layer
+        [Int]$layer,
+
+        [Parameter(ParameterSetName='Default', Position=3, Mandatory=$true, HelpMessage="Only show info of background?")]
+        [Bool]$onlyBackground,
+
+        [Parameter(ParameterSetName='Default', Position=4, Mandatory=$true, HelpMessage="Only show info of foreground?")]
+        [Bool]$onlyforeground,
+
+        [Parameter(ParameterSetName='Default', Position=2, Mandatory=$true, HelpMessage="Please specify the delay")]
+        [Bool]$delay
+
         )
      $InfoCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoCommand")
-
-     $InfoCommand
+     $InfoCommand.setChannel($channel)
+     $InfoCommand.setLayer($layer)
+     If($onlyBackground){$InfoCommand.setOnlyBackground($onlyBackground)}
+     If($onlyForeground){$InfoCommand.setOnlyBackground($onlyForeground)}
+     If($delay){$InfoCommand.setDelay($delay)}
+     ,$InfoCommand
 }
 function New-InfoTemplateCommand{
     <# .Synopsis
@@ -596,7 +633,7 @@ function New-InfoTemplateCommand{
 [CmdletBinding(DefaultParameterSetName="Default")] 
 param (
 
-        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the channel #")]
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the template name")]
         [String]$template
         )
      $InfoTemplateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoTemplateCommand")
@@ -612,7 +649,8 @@ function New-InfoConfigCommand{
      ,$InfoConfigCommand
 }
 function New-InfoPathsCommand{
-    <# .Synopsis
+    <# 
+    .Synopsis
 	Requests the path configuration of the server
     .Example1
         $paths = New-InfoPathsCommand
@@ -625,24 +663,39 @@ function New-InfoPathsCommand{
      ,$InfoPathsCommand
 }
 function New-InfoServerCommand{
-    <# .Synopsis
+    <# 
+    .Synopsis
 	Requests informations about the connected server
+    .Example1
+        $server = New-InfoServerCommand
+        $cgServer = $server.execute([ref]$casparcg)
+        $cgServer.getServerMessage()
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
      $InfoServerCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoServerCommand")
      ,$InfoServerCommand
 }
 function New-InfoSystemCommand{
-    <# .Synopsis
+    <# 
+    .Synopsis
 	Requests system information of the server
+    .Example1
+        $system = New-InfoSystemCommand
+        $cgSystem = $system.execute([ref]$casparcg)
+        $cgSystem.getServerMessage()
 #>
 [CmdletBinding(DefaultParameterSetName="Default")] 
      $InfoSystemCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoSystemCommand")
      ,$InfoSystemCommand
 }
 function New-InfoThreadsCommand{
-    <# .Synopsis
+    <# 
+    .Synopsis
 	Requests informations about the threads and their names of the connected server
+    .Example1
+        $threads = New-InfoThreadsCommand
+        $cgthreads = $threads.execute([ref]$casparcg)
+        $cgthreads.getServerMessage()
 #>
 [CmdletBinding(DefaultParameterSetName="Default")] 
      $InfoThreadsCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("InfoThreadsCommand")
@@ -692,7 +745,14 @@ function New-ThumbnailGenerateCommand{
 	*media: The media file
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the media file")]
+        [string]$media
+        )
      $ThumbnailGenerateCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailGenerateCommand")
+     $ThumbnailGenerateCommand.setMedia($media)
+     ,$ThumbnailGenerateCommand
 }
 function New-ThumbnailGenerateAllCommand{
     <# .Synopsis
@@ -708,7 +768,13 @@ function New-ThumbnailRetrieveCommand{
 	*media: The media file
 #> 
 [CmdletBinding(DefaultParameterSetName="Default")]
+param (
+
+        [Parameter(ParameterSetName='Default', Position=1, Mandatory=$true, HelpMessage="Please specify the media file")]
+        [string]$media
+        )
      $ThumbnailRetrieveCommand = [CasparCGNETConnector.CasparCGCommandFactory]::getCommand("ThumbnailRetrieveCommand")
+     $ThumbnailRetrieveCommand.setMedia($media)
      ,$ThumbnailRetrieveCommand
 }
 function New-CgAddCommand{
